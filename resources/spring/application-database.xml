@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+    <!--加载properties文件-->
+    <context:property-placeholder location="classpath:database.properties"></context:property-placeholder>
+
+    <!--启用spring扫描-->
+    <context:component-scan base-package="com.wondersgroup.hadoop">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"></context:exclude-filter>
+    </context:component-scan>
+
+    <!--datasource-->
+    <!--mysql-->
+    <bean id="dataSourceDefault" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${mysql.jdbc.driver}"></property>
+        <property name="url" value="${mysql.jdbc.url}"></property>
+        <property name="username" value="${mysql.jdbc.username}"></property>
+        <property name="password" value="${mysql.jdbc.password}"></property>
+        <property name="maxActive" value="20"></property>
+        <property name="maxIdle" value="10"></property>
+        <property name="minIdle" value="2"></property>
+        <!--30分钟回收一次-->
+        <property name="timeBetweenEvictionRunsMillis" value="1800000"></property>
+        <property name="initialSize" value="2"></property>
+        <property name="validationQuery" value="select 1 from dual"></property>
+    </bean>
+    <!--oracle-->
+    <bean id="dataSourceBusiness" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${oracle.jdbc.driver}"></property>
+        <property name="url" value="${oracle.jdbc.url}"></property>
+        <property name="username" value="${oracle.jdbc.username}"></property>
+        <property name="password" value="${oracle.jdbc.password}"></property>
+        <property name="maxActive" value="20"></property>
+        <property name="maxIdle" value="10"></property>
+        <property name="minIdle" value="2"></property>
+        <!--30分钟回收一次-->
+        <property name="timeBetweenEvictionRunsMillis" value="1800000"></property>
+        <property name="initialSize" value="2"></property>
+        <property name="validationQuery" value="select 1 from dual"></property>
+    </bean>
+    <!--多数据源汇总-->
+    <bean id="dataSource" class="com.wondersgroup.hadoop.configration.datasource.MultiDataSource">
+        <property name="targetDataSources">
+            <map>
+                <entry key="dataSourceMySql" value-ref="dataSourceDefault"></entry>
+                <entry key="dataSourceOracle" value-ref="dataSourceBusiness"></entry>
+            </map>
+        </property>
+        <property name="defaultTargetDataSource" ref="dataSourceDefault"></property>
+    </bean>
+
+    <!--mybaitis-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"></property>
+        <property name="mapperLocations" value="classpath:com/wondersgroup/hadoop/mapper/**/*.xml"></property>
+    </bean>
+    <!--自动扫描dao接口，并生成代理对象，注意，dao接口必须实现@MapperScan注解-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.wondersgroup.hadoop.dao.*"></property>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+    </bean>
+
+    <!--事物管理-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+</beans>

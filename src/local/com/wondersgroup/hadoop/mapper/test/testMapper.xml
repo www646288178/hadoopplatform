@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace与java文件路径一致-->
+<mapper namespace="com.wondersgroup.hadoop.dao.test.TestDao">
+    <select id="selectCountTest" resultType="int">
+        select count(1) from wll_11
+    </select>
+    <insert id="insertInto" parameterType="int">
+        insert into wll_11 values(#{value})
+    </insert>
+</mapper>
